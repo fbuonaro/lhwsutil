@@ -35,29 +35,6 @@ namespace LHWSUtilImplNS
             }
         }
 
-        // switch( paddingNeeded )
-        // {
-        //     case( 0 ):
-        //     {
-        //         b64Str = b64UrlStr;
-        //         break;
-        //     }
-        //     case( 1 ):
-        //     {
-        //         b64Str = b64UrlStr + "=";
-        //         break;
-        //     }
-        //     case( 2 ):
-        //     {
-        //         b64Str = b64UrlStr + "==";
-        //         break;
-        //     }
-        //     default:
-        //     {
-        //         return 1;
-        //     }
-        // }
-
         for( auto it = b64Str.begin(); it != b64Str.end(); ++it )
         {
             switch( *it )
