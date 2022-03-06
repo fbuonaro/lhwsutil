@@ -28,40 +28,51 @@ namespace LHWSUtilNS
     IJwtValidatorFactory::~IJwtValidatorFactory()
     {
     }
+    
+    UserIdentifiers::UserIdentifiers()
+    :   username()
+    ,   email()
+    ,   emailVerified()
+    ,   sub()
+    {
+    }
 
-    int GetIdentifiers( const IValidJwt& jwt, std::string& username, std::string& email, bool& emailVerified )
+    int GetIdentifiers( const IValidJwt& jwt, UserIdentifiers& userIdentifiers )
     {
         wsUtilLogSetScope( "GetIdentifiers" );
         int rc = 0;
 
-        std::string _username;
-        std::string _email;
-        bool _emailVerified;
+        UserIdentifiers _userIdentifiers;
         
-        rc = jwt.GetGrantStrValue( "preferred_username", _username );
+        rc = jwt.GetGrantStrValue( "preferred_username", _userIdentifiers.username );
         if( rc != 0 )
         {
             wsUtilLogError( "jwt is missing preferred_username" );
             return 1;
         }   
 
-        rc = jwt.GetGrantStrValue( "email", _email );
+        rc = jwt.GetGrantStrValue( "email", _userIdentifiers.email );
         if( rc != 0 )
         {
             wsUtilLogError( "jwt is missing email" );
             return 2;
         }   
 
-        rc = jwt.GetGrantBoolValue( "email_verified", _emailVerified );
+        rc = jwt.GetGrantBoolValue( "email_verified", _userIdentifiers.emailVerified );
         if( rc != 0 )
         {
             wsUtilLogError( "jwt is missing email_verified" );
             return 3;
         }   
 
-        email = std::move( _email );
-        username = std::move( _username );
-        emailVerified = _emailVerified;
+        rc = jwt.GetGrantStrValue( "sub", _userIdentifiers.sub );
+        if( rc != 0 )
+        {
+            wsUtilLogError( "jwt is missing sub" );
+            return 4;
+        }   
+
+        userIdentifiers = std::move( _userIdentifiers );
 
         return 0;
     }

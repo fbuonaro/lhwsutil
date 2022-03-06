@@ -48,7 +48,17 @@ namespace LHWSUtilNS
 
     std::shared_ptr< IJwtValidatorFactory > GetStandardJwtValidatorFactory();
 
-    int GetIdentifiers( const IValidJwt& jwt, std::string& username, std::string& email, bool& emailVerified );
+    struct UserIdentifiers
+    {
+        UserIdentifiers();
+
+        std::string username;
+        std::string email;
+        bool emailVerified;
+        std::string sub;
+    };
+
+    int GetIdentifiers( const IValidJwt& jwt, UserIdentifiers& userIdentifiers );
 
     int GetScopes( const IValidJwt& jwt, std::unordered_set< std::string >& scopes );
 }
