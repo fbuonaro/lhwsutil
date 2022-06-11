@@ -12,73 +12,65 @@ namespace LHWSUtilImplNS
 {
     class SimpleHttpClientCurl : public LHWSUtilNS::ISimpleHttpClient
     {
-        public:
-            SimpleHttpClientCurl();
-            ~SimpleHttpClientCurl();
+    public:
+        SimpleHttpClientCurl();
+        ~SimpleHttpClientCurl();
 
-            SimpleHttpClientCurl( const SimpleHttpClientCurl& other ) = delete;
-            SimpleHttpClientCurl& operator=( const SimpleHttpClientCurl& other ) = delete;
-            SimpleHttpClientCurl( SimpleHttpClientCurl&& other ) = delete;
+        SimpleHttpClientCurl( const SimpleHttpClientCurl& other ) = delete;
+        SimpleHttpClientCurl& operator=( const SimpleHttpClientCurl& other ) = delete;
+        SimpleHttpClientCurl( SimpleHttpClientCurl&& other ) = delete;
 
-            int Get( const std::string& url, std::string& responseBody );
-            int Get( const std::string& url,
-                     const LHWSUtilNS::HttpRequestParams& params,
-                     std::string& responseBody );
+        int Get( const std::string& url, std::string& responseBody );
+        int Get( const std::string& url,
+            const LHWSUtilNS::HttpRequestParams& params,
+            std::string& responseBody );
 
-            int Post( const std::string& url,
-                      const std::string& data,
-                      const std::unordered_map< std::string, std::string >& headers,
-                      std::string& responseBody );
-            int Post( const std::string& url,
-                      const std::string& data,
-                      const std::unordered_map< std::string, std::string >& headers,
-                      const LHWSUtilNS::HttpRequestParams& params,
-                      std::string& responseBody );
+        int Post( const std::string& url,
+            const std::string& data,
+            const std::unordered_map< std::string, std::string >& headers,
+            std::string& responseBody );
+        int Post( const std::string& url,
+            const std::string& data,
+            const std::unordered_map< std::string, std::string >& headers,
+            const LHWSUtilNS::HttpRequestParams& params,
+            std::string& responseBody );
 
-            std::string UrlEscape( const std::string& data );
+        std::string UrlEscape( const std::string& data );
 
-        private:
-            CURL* curl;
+    private:
+        CURL* curl;
     };
 
     class SimpleHttpClientCurlFactory : public LHWSUtilNS::ISimpleHttpClientFactory
     {
-        public:
-            SimpleHttpClientCurlFactory();
-            ~SimpleHttpClientCurlFactory();
+    public:
+        SimpleHttpClientCurlFactory();
+        ~SimpleHttpClientCurlFactory();
 
-            std::unique_ptr< LHWSUtilNS::ISimpleHttpClient > CreateSimpleHttpClient() const;
-    };
-
-    // Not thread safe, only one meant to be created per process
-    class MainGlobalContextCurl
-    {
-        public:
-            MainGlobalContextCurl();
-            ~MainGlobalContextCurl();
-
-            MainGlobalContextCurl( const MainGlobalContextCurl& other ) = delete;
-            MainGlobalContextCurl& operator=( const MainGlobalContextCurl& other ) = delete;
-            MainGlobalContextCurl( MainGlobalContextCurl&& other ) = delete;
+        std::unique_ptr< LHWSUtilNS::ISimpleHttpClient > CreateSimpleHttpClient() const;
     };
 
     class GlobalHttpClientCurlFactory : public LHWSUtilNS::ISimpleHttpClientFactory
     {
-        public:
-            GlobalHttpClientCurlFactory();
-            ~GlobalHttpClientCurlFactory();
+    public:
+        GlobalHttpClientCurlFactory();
+        ~GlobalHttpClientCurlFactory();
 
-            GlobalHttpClientCurlFactory( const GlobalHttpClientCurlFactory& other ) = delete;
-            GlobalHttpClientCurlFactory& operator=( const GlobalHttpClientCurlFactory& other ) = delete;
-            GlobalHttpClientCurlFactory( GlobalHttpClientCurlFactory&& other ) = delete;
+        GlobalHttpClientCurlFactory( const GlobalHttpClientCurlFactory& other ) = delete;
+        GlobalHttpClientCurlFactory& operator=( const GlobalHttpClientCurlFactory& other ) = delete;
 
-            std::unique_ptr< LHWSUtilNS::ISimpleHttpClient > CreateSimpleHttpClient() const;
+        std::unique_ptr< LHWSUtilNS::ISimpleHttpClient > CreateSimpleHttpClient() const;
 
-        private:
-            MainGlobalContextCurl globalContext;
-            SimpleHttpClientCurlFactory clientCurlFactory;
+    private:
+        SimpleHttpClientCurlFactory clientCurlFactory;
     };
+}
 
+#include <lhmiscutil/onetimecreate.h>
+
+namespace LHMiscUtilNS
+{
+    EnableClassAsOneTimeCreate( LHWSUtilImplNS::GlobalHttpClientCurlFactory );
 }
 
 #endif

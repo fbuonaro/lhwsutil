@@ -364,24 +364,15 @@ namespace LHWSUtilImplNS
         return std::unique_ptr< LHWSUtilNS::ISimpleHttpClient >( new SimpleHttpClientCurl() );
     }
 
-    MainGlobalContextCurl::MainGlobalContextCurl()
+    GlobalHttpClientCurlFactory::GlobalHttpClientCurlFactory()
+        : clientCurlFactory()
     {
         curl_global_init( CURL_GLOBAL_ALL );
     }
 
-    MainGlobalContextCurl::~MainGlobalContextCurl()
-    {
-        curl_global_cleanup();
-    }
-
-    GlobalHttpClientCurlFactory::GlobalHttpClientCurlFactory()
-        : globalContext()
-        , clientCurlFactory()
-    {
-    }
-
     GlobalHttpClientCurlFactory::~GlobalHttpClientCurlFactory()
     {
+        curl_global_cleanup();
     }
 
     std::unique_ptr< LHWSUtilNS::ISimpleHttpClient > GlobalHttpClientCurlFactory::CreateSimpleHttpClient() const
@@ -392,41 +383,8 @@ namespace LHWSUtilImplNS
 
 namespace LHWSUtilNS
 {
-    namespace
-    {
-        struct HttpClientCurlFactoryOnceWrapper
-        {
-            HttpClientCurlFactoryOnceWrapper()
-                : ptr( std::make_shared< LHWSUtilImplNS::GlobalHttpClientCurlFactory >() )
-                , ptrMutex()
-            {
-                if ( !ptr )
-                {
-                    throw std::runtime_error( "failed to one time create http client factory" );
-                }
-            }
-
-            std::shared_ptr< LHWSUtilImplNS::GlobalHttpClientCurlFactory > Get()
-            {
-                const std::lock_guard<std::mutex> lock( ptrMutex );
-                if ( ptr )
-                {
-                    return std::move( ptr );
-                }
-                else
-                {
-                    return nullptr;
-                }
-            }
-
-            std::shared_ptr< LHWSUtilImplNS::GlobalHttpClientCurlFactory > ptr;
-            std::mutex ptrMutex;
-        }
-    }
-
     std::shared_ptr< ISimpleHttpClientFactory > GetStandardSimpleHttpClientFactoryOnce()
     {
-        static HttpClientCurlFactoryOnceWrapper httpClientCurlFactoryOnceWrapper;
-        return httpClientCurlFactoryOnceWrapper.Get();
+        return LHMiscUtilNS::OneTimeCreate< LHWSUtilImplNS::GlobalHttpClientCurlFactory >::Create();
     }
 }
