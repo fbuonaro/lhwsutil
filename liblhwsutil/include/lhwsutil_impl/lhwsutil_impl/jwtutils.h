@@ -11,7 +11,14 @@ namespace LHWSUtilImplNS
     // does not add padding
     int ConvertB64UrlStrToB64( const std::string& b64UrlStr, std::string& b64StrOut, int& paddingLengthOut );
 
-    int DecodeB64UrlStr( const std::string& b64UrlEncodedStr, std::vector< unsigned char >& decodedStrOut );
+    int DecodeB64UrlStr(
+        const std::string& b64UrlEncodedStr,
+        std::vector< unsigned char >& decodedStrOut );
+
+    int DecodeB64Str(
+        const std::string& b64EncodedStr,
+        std::vector< unsigned char >& decodedStrOut,
+        bool includeNewLines );
 
     int DecomposeJwtStr( const std::string& jwtStr,
         std::string& b64UrlEncodedHeaderOut,
@@ -37,7 +44,7 @@ namespace LHWSUtilImplNS
 
     int FillKeyStrFromJwkJson( const std::string& alg, const rapidjson::Value& key, std::string& keyStrOut );
 
-    int EncodeStrToB64( const std::string& str, std::string& b64EncodedStr );
+    int EncodeStrToB64( const std::string& str, std::string& b64EncodedStr, bool includeNewLines = false );
 }
 
 #endif
