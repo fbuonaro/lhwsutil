@@ -14,24 +14,24 @@ namespace LHWSUtilImplNS
     int DecodeB64UrlStr( const std::string& b64UrlEncodedStr, std::vector< unsigned char >& decodedStrOut );
 
     int DecomposeJwtStr( const std::string& jwtStr,
-                         std::string& b64UrlEncodedHeaderOut,
-                         std::string& b64UrlEncodedPayloadOut,
-                         std::string& b64UrlEncodedSignatureOut );
+        std::string& b64UrlEncodedHeaderOut,
+        std::string& b64UrlEncodedPayloadOut,
+        std::string& b64UrlEncodedSignatureOut );
 
     int DecodeDecomposedJwtStrs( const std::string& b64UrlEncodedHeader,
-                                 const std::string& b64UrlEncodedPayload,
-                                 std::string& decodedHeaderOut,
-                                 std::string& decodedPayloadOut );
+        const std::string& b64UrlEncodedPayload,
+        std::string& decodedHeaderOut,
+        std::string& decodedPayloadOut );
 
     int DecomposeAndDecodeJwtStr( const std::string& jwtStr,
-                                  std::string& decodedHeaderOut,
-                                  std::string& decodedPayloadOut,
-                                  std::string& b64UrlEncodedSignatureOut );
+        std::string& decodedHeaderOut,
+        std::string& decodedPayloadOut,
+        std::string& b64UrlEncodedSignatureOut );
 
     // nBytes and eBytes are big endian encoded integers
     int WriteOutRSAPubKeyComponentsAsPEM( const std::vector< unsigned char >& nBytes,
-                                          const std::vector< unsigned char >& eBytes,
-                                          std::string& pemStrOut );
+        const std::vector< unsigned char >& eBytes,
+        std::string& pemStrOut );
 
     int FillRSxKeyFromJwkJson( const rapidjson::Value& key, std::string& keyStrOut );
 
