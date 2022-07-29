@@ -435,6 +435,8 @@ namespace LHWSUtilImplNS
             return 4;
         }
 
+        wsUtilLogTrace( "n=[" << nStr << "], e=[" << eStr << "], pem=[" << rsaPublicKeyPEMStr << "]" );
+
         keyStrOut = std::move( rsaPublicKeyPEMStr );
 
         return 0;
