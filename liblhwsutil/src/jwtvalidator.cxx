@@ -85,6 +85,8 @@ namespace LHWSUtilImplNS
 
                 keyOut->jwt_key = reinterpret_cast<const unsigned char*>( keyPem.c_str() );
                 keyOut->jwt_key_len = keyPem.size();
+
+                return 0;
             }
             catch ( const std::exception& e )
             {
