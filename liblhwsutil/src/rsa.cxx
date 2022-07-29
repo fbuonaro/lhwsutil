@@ -9,16 +9,16 @@
 namespace LHWSUtilImplNS
 {
     RSAPublicKey::RSAPublicKey( const std::vector< unsigned char >& nBytes,
-                                const std::vector< unsigned char >& eBytes )
-    :   rsa( nullptr )
+        const std::vector< unsigned char >& eBytes )
+        : rsa( nullptr )
     {
-        if( nBytes.empty() || eBytes.empty() )
+        if ( nBytes.empty() || eBytes.empty() )
         {
             throw std::runtime_error( "n or e is empty" );
         }
 
         rsa = RSA_new();
-        if( !( rsa ) )
+        if ( !( rsa ) )
         {
             throw std::runtime_error( "" );
         }
@@ -31,16 +31,16 @@ namespace LHWSUtilImplNS
     {
         BIO* bioMem = NULL;
         int rc = 0;
-        
+
+        wsUtilLogSetScope( "GetPEMFormatInto" );
+
         try
         {
-            wsUtilLogSetScope( "GetPEMFormatInto" );
-
             char* bioMemData = nullptr;
             long bioMemDataLength = 0;
 
             bioMem = BIO_new( BIO_s_mem() );
-            if( !( bioMem ) )
+            if ( !( bioMem ) )
             {
                 wsUtilLogFatal( "failed to create new bio" );
                 return 1;
@@ -49,14 +49,14 @@ namespace LHWSUtilImplNS
             rc = BIO_set_close( bioMem, BIO_CLOSE );
 
             rc = PEM_write_bio_RSA_PUBKEY( bioMem, rsa );
-            if( rc != 1 )
+            if ( rc != 1 )
             {
                 wsUtilLogError( "failed to write rsa pubkey to bio" );
                 return 2;
             }
 
             bioMemDataLength = BIO_get_mem_data( bioMem, &bioMemData );
-            if( bioMemDataLength <= 0 || !( bioMemData ) )
+            if ( bioMemDataLength <= 0 || !( bioMemData ) )
             {
                 wsUtilLogError( "failed to get bio mem data" );
                 return 3;
@@ -68,9 +68,9 @@ namespace LHWSUtilImplNS
 
             return 0;
         }
-        catch( ... )
+        catch ( ... )
         {
-            if( bioMem )
+            if ( bioMem )
             {
                 BIO_vfree( bioMem );
             }
@@ -81,7 +81,7 @@ namespace LHWSUtilImplNS
 
     RSAPublicKey::~RSAPublicKey()
     {
-        if( rsa )
+        if ( rsa )
         {
             RSA_free( rsa );
             rsa = nullptr;

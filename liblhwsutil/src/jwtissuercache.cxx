@@ -334,17 +334,34 @@ namespace LHWSUtilImplNS
             for ( auto itKey = keys.Begin(); itKey != keys.End(); ++itKey )
             {
                 const rapidjson::Value& keyJwkJson( *itKey );
-                if ( !( keyJwkJson.IsObject() && keyJwkJson.HasMember( "alg" ) ) )
+                if ( !( keyJwkJson.IsObject() ) )
                 {
                     wsUtilLogError( "keys json item is missing alg member" );
 
                     return 8;
                 }
 
+                if ( !( keyJwkJson.HasMember( "alg" ) ) )
+                {
+                    wsUtilLogError( "keys json item is missing alg member" );
+
+                    return 80;
+                }
+
+                if ( !( keyJwkJson.HasMember( "use" ) ) )
+                {
+                    wsUtilLogError( "keys json item is missing alg member" );
+
+                    return 81;
+                }
+
+
                 // TODO - case insensitive
                 std::string alg( keyJwkJson[ "alg" ].GetString(),
                     keyJwkJson[ "alg" ].GetStringLength() );
-                if ( algsToFetch.count( alg ) )
+                std::string keyUse( keyJwkJson[ "use" ].GetString(),
+                    keyJwkJson[ "use" ].GetStringLength() );
+                if ( ( keyUse == "sig" ) && algsToFetch.count( alg ) )
                 {
                     std::string keyPem;
                     rc = FillKeyStrFromJwkJson( alg, keyJwkJson, keyPem );
