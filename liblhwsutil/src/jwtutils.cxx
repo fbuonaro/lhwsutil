@@ -416,6 +416,7 @@ namespace LHWSUtilImplNS
         rc = DecodeB64UrlStr( nStr, nBytes );
         if ( rc != 0 || nBytes.empty() )
         {
+            wsUtilLogError( "failed to decode n=" << nStr );
             return 2;
         }
 
@@ -423,6 +424,7 @@ namespace LHWSUtilImplNS
         rc = DecodeB64UrlStr( eStr, eBytes );
         if ( rc != 0 || eBytes.empty() )
         {
+            wsUtilLogError( "failed to decode e=" << eStr );
             return 3;
         }
 

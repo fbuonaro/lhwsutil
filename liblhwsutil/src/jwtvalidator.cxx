@@ -1,6 +1,6 @@
 #include <errno.h>
 
-#include <jwt.h> // C 
+#include <jwt.h> // C
 
 #include <rapidjson/document.h>
 #include <rapidjson/writer.h>
@@ -34,65 +34,77 @@ namespace LHWSUtilImplNS
     {
         int getKeyForJwt( const jwt_t* jwtIn, jwt_key_t* keyOut )
         {
+            wsUtilLogSetScope( "getKeyForJwt" );
+
+            wsUtilLogTrace( "getting key" );
+
             try
             {
-                wsUtilLogSetScope( "getKeyForJwt" );
 
                 // idk why this accepts const when all of the jwt_get_grant* functions
                 // accept non-const wtf
-                ValidJwt jwt( const_cast< jwt_t* >( jwtIn ), false );
+                ValidJwt jwt( const_cast<jwt_t*>( jwtIn ), false );
                 int rc = 0;
                 std::string iss;
 
                 rc = jwt.GetGrantStrValue( "iss", iss );
-                if( rc || iss.empty() )
+                if ( rc || iss.empty() )
                 {
+                    wsUtilLogError( "missing 'iss'" );
                     return 1;
                 }
-                
+
                 jwt_alg_t jwtAlgType = jwt_get_alg( jwtIn );
                 const char* jwtAlg( jwt_alg_str( jwtAlgType ) );
-                if( !( jwtAlg ) )
+                if ( !( jwtAlg ) )
                 {
+                    wsUtilLogError( "invalid 'alg'" );
                     return 2;
                 }
 
                 std::string alg( jwtAlg );
 
                 auto jwtIssuerCache(
-                    LHMiscUtilNS::Singleton< LHWSUtilNS::IJwtIssuerCache >::GetInstance() ); 
-                if( !jwtIssuerCache )
+                    LHMiscUtilNS::Singleton< LHWSUtilNS::IJwtIssuerCache >::GetInstance() );
+                if ( !jwtIssuerCache )
                 {
+                    wsUtilLogError( "failed to fetch issuer cache" );
                     return 3;
                 }
 
                 auto jwtIssuer = jwtIssuerCache->GetIssuer( iss );
-                if( !( jwtIssuer->AlgIsSupported( alg ) ) )
+                if ( !( jwtIssuer->AlgIsSupported( alg ) ) )
                 {
+                    wsUtilLogError( "unsupported alg=[" << alg << "]" );
                     return 4;
                 }
 
                 const std::string& keyPem( jwtIssuer->GetKeyPemForAlg( alg ) );
-                keyOut->jwt_key = reinterpret_cast< const unsigned char* >( keyPem.c_str() );
+
+                wsUtilLogTrace( "using key=[" << keyPem << "]" );
+
+                keyOut->jwt_key = reinterpret_cast<const unsigned char*>( keyPem.c_str() );
                 keyOut->jwt_key_len = keyPem.size();
             }
-            catch( const std::exception& e )
+            catch ( const std::exception& e )
             {
+                wsUtilLogError( "exception e=[" << e.what() << "]" );
                 return -1;
             }
-            catch( ... )
+            catch ( ... )
             {
+                wsUtilLogError( "unknown exception]" );
                 return -2;
             }
         }
     }
 
     ValidJwt::ValidJwt( jwt_t** lpJwt )
-    :   LHWSUtilNS::IValidJwt()
-    ,   jwt( nullptr )
-    ,   owning( false )
+        : LHWSUtilNS::IValidJwt()
+        , jwt( nullptr )
+        , owning( false )
     {
-        if( lpJwt && *lpJwt )
+        if ( lpJwt && *lpJwt )
         {
             jwt = *lpJwt;
             *lpJwt = nullptr;
@@ -105,13 +117,13 @@ namespace LHWSUtilImplNS
     }
 
     ValidJwt::ValidJwt( jwt_t* _jwt, bool copyJwt )
-    :   LHWSUtilNS::IValidJwt()
-    ,   jwt( nullptr )
-    ,   owning( false )
+        : LHWSUtilNS::IValidJwt()
+        , jwt( nullptr )
+        , owning( false )
     {
-        if( _jwt )
+        if ( _jwt )
         {
-            if( copyJwt )
+            if ( copyJwt )
             {
                 jwt = jwt_dup( _jwt );
                 owning = true;
@@ -129,7 +141,7 @@ namespace LHWSUtilImplNS
 
     ValidJwt::~ValidJwt()
     {
-        if( jwt && owning )
+        if ( jwt && owning )
         {
             jwt_free( jwt );
             jwt = nullptr;
@@ -137,16 +149,16 @@ namespace LHWSUtilImplNS
     }
 
     int ValidJwt::GetGrantBoolValue( const std::string& grant,
-                                     bool& valueOut ) const
+        bool& valueOut ) const
     {
-        if( grant.empty() )
+        if ( grant.empty() )
         {
             return -1;
         }
 
         int jwtBool = jwt_get_grant_bool( jwt, grant.c_str() );
         int ret = getJwtErrno();
-        if( ret == 0 )
+        if ( ret == 0 )
         {
             valueOut = jwtBool;
         }
@@ -155,16 +167,16 @@ namespace LHWSUtilImplNS
     }
 
     int ValidJwt::GetGrantIntValue( const std::string& grant,
-                                    long& valueOut ) const
+        long& valueOut ) const
     {
-        if( grant.empty() )
+        if ( grant.empty() )
         {
             return -1;
         }
 
         long jwtInt = jwt_get_grant_int( jwt, grant.c_str() );
         int ret = getJwtErrno();
-        if( ret == 0 )
+        if ( ret == 0 )
         {
             valueOut = jwtInt;
         }
@@ -173,16 +185,16 @@ namespace LHWSUtilImplNS
     }
 
     int ValidJwt::GetGrantStrValue( const std::string& grant,
-                                    std::string& valueOut ) const
+        std::string& valueOut ) const
     {
-        if( grant.empty() )
+        if ( grant.empty() )
         {
             return -1;
         }
 
         const char* jwtStr = jwt_get_grant( jwt, grant.c_str() );
         int ret = 0;
-        if( jwtStr )
+        if ( jwtStr )
         {
             valueOut = jwtStr;
         }
@@ -195,16 +207,16 @@ namespace LHWSUtilImplNS
     }
 
     int ValidJwt::GetGrantJsonValue( const std::string& grant,
-                                     std::string& valueOut ) const
+        std::string& valueOut ) const
     {
-        if( grant.empty() )
+        if ( grant.empty() )
         {
             return -1;
         }
 
         char* jwtJson = jwt_get_grants_json( jwt, grant.c_str() );
         int ret = 0;
-        if( jwtJson )
+        if ( jwtJson )
         {
             valueOut = jwtJson;
             jwt_free_str( jwtJson );
@@ -220,7 +232,7 @@ namespace LHWSUtilImplNS
     void ValidJwt::ToString( std::string& out, bool prettyPrint ) const
     {
         char* jwtStr = jwt_dump_str( jwt, prettyPrint );
-        if( jwtStr )
+        if ( jwtStr )
         {
             out = jwtStr;
             jwt_free_str( jwtStr );
@@ -236,7 +248,7 @@ namespace LHWSUtilImplNS
     ValidJwtJson::ValidJwtJson( const rapidjson::Value& _jsonValue )
     {
         jsonValue.CopyFrom( _jsonValue, jsonValue.GetAllocator() );
-        if( !( jsonValue.IsObject() ) )
+        if ( !( jsonValue.IsObject() ) )
         {
             throw std::runtime_error( "json value is not a valid object" );
         }
@@ -247,16 +259,16 @@ namespace LHWSUtilImplNS
     }
 
     int ValidJwtJson::GetGrantBoolValue( const std::string& grant,
-                                         bool& valueOut ) const
+        bool& valueOut ) const
     {
-        if( grant.empty() )
+        if ( grant.empty() )
         {
             return -1;
         }
 
         int ret = 0;
 
-        if( jsonValue.HasMember( grant.c_str() ) && jsonValue[ grant.c_str() ].IsBool() )
+        if ( jsonValue.HasMember( grant.c_str() ) && jsonValue[ grant.c_str() ].IsBool() )
         {
             valueOut = jsonValue[ grant.c_str() ].GetBool();
         }
@@ -269,16 +281,16 @@ namespace LHWSUtilImplNS
     }
 
     int ValidJwtJson::GetGrantIntValue( const std::string& grant,
-                                        long& valueOut ) const
+        long& valueOut ) const
     {
-        if( grant.empty() )
+        if ( grant.empty() )
         {
             return -1;
         }
 
         int ret = 0;
 
-        if( jsonValue.HasMember( grant.c_str() ) && jsonValue[ grant.c_str() ].IsInt() )
+        if ( jsonValue.HasMember( grant.c_str() ) && jsonValue[ grant.c_str() ].IsInt() )
         {
             valueOut = jsonValue[ grant.c_str() ].GetInt();
         }
@@ -291,16 +303,16 @@ namespace LHWSUtilImplNS
     }
 
     int ValidJwtJson::GetGrantJsonValue( const std::string& grant,
-                                         std::string& valueOut ) const
+        std::string& valueOut ) const
     {
-        if( grant.empty() )
+        if ( grant.empty() )
         {
             return -1;
         }
 
         int ret = 0;
 
-        if( jsonValue.HasMember( grant.c_str() ) )
+        if ( jsonValue.HasMember( grant.c_str() ) )
         {
             rapidjson::StringBuffer buffer;
             rapidjson::Writer< rapidjson::StringBuffer > writer( buffer );
@@ -317,19 +329,19 @@ namespace LHWSUtilImplNS
     }
 
     int ValidJwtJson::GetGrantStrValue( const std::string& grant,
-                                        std::string& valueOut ) const
+        std::string& valueOut ) const
     {
-        if( grant.empty() )
+        if ( grant.empty() )
         {
             return -1;
         }
 
         int ret = 0;
 
-        if( jsonValue.HasMember( grant.c_str() ) && jsonValue[ grant.c_str() ].IsString() )
+        if ( jsonValue.HasMember( grant.c_str() ) && jsonValue[ grant.c_str() ].IsString() )
         {
             valueOut.assign( jsonValue[ grant.c_str() ].GetString(),
-                             jsonValue[ grant.c_str() ].GetStringLength() );
+                jsonValue[ grant.c_str() ].GetStringLength() );
         }
         else
         {
@@ -350,7 +362,7 @@ namespace LHWSUtilImplNS
 
 
     JwtValidator::JwtValidator()
-    :   LHWSUtilNS::IJwtValidator()
+        : LHWSUtilNS::IJwtValidator()
     {
     }
 
@@ -361,14 +373,14 @@ namespace LHWSUtilImplNS
         int rc = 0;
         jwt_t* jwt = nullptr;
 
-        if( b64UrlEncodedJwt.empty() )
+        if ( b64UrlEncodedJwt.empty() )
         {
             wsUtilLogFatal( "jwt is empty" );
             return nullptr;
         }
 
         rc = jwt_decode_2( &jwt, b64UrlEncodedJwt.c_str(), &getKeyForJwt );
-        if( rc != 0 )
+        if ( rc != 0 )
         {
             wsUtilLogInfo( "failed to decode, rc=" << rc );
 
@@ -395,16 +407,16 @@ namespace LHWSUtilImplNS
 
 
         auto simpleHttpClientFactory(
-            LHMiscUtilNS::Singleton< LHWSUtilNS::ISimpleHttpClientFactory >::GetInstance() ); 
-        if( !simpleHttpClientFactory )
+            LHMiscUtilNS::Singleton< LHWSUtilNS::ISimpleHttpClientFactory >::GetInstance() );
+        if ( !simpleHttpClientFactory )
         {
             wsUtilLogFatal( "failed to get simpleHttpClientFactory" );
 
             return nullptr;
         }
-        
+
         auto simpleHttpClient( simpleHttpClientFactory->CreateSimpleHttpClient() );
-        if( !simpleHttpClient )
+        if ( !simpleHttpClient )
         {
             wsUtilLogFatal( "failed to create simpleHttpClient" );
 
@@ -412,17 +424,17 @@ namespace LHWSUtilImplNS
         }
 
         rc = DecomposeAndDecodeJwtStr( b64UrlEncodedJwt,
-                                       decodedHeaderJsonStr,
-                                       decodedPayloadJsonStr,
-                                       b64UrlEncodedSignature );
-        if( rc != 0 )
+            decodedHeaderJsonStr,
+            decodedPayloadJsonStr,
+            b64UrlEncodedSignature );
+        if ( rc != 0 )
         {
             return nullptr;
         }
-        
+
         rapidjson::Document headerJson;
         rapidjson::ParseResult parsedOkay = headerJson.Parse( decodedHeaderJsonStr.c_str() );
-        if( !( parsedOkay ) )
+        if ( !( parsedOkay ) )
         {
             wsUtilLogError( "failed to parse header json[" << decodedHeaderJsonStr << "]" );
 
@@ -431,16 +443,16 @@ namespace LHWSUtilImplNS
 
         rapidjson::Document payloadJson;
         parsedOkay = payloadJson.Parse( decodedPayloadJsonStr.c_str() );
-        if( !( parsedOkay ) )
+        if ( !( parsedOkay ) )
         {
             wsUtilLogError( "failed to parse payload json[" << decodedPayloadJsonStr << "]" );
 
             return nullptr;
         }
 
-        if( !( payloadJson.IsObject() &&
-               payloadJson.HasMember( "iss" ) &&
-               payloadJson[ "iss" ].IsString() ) )
+        if ( !( payloadJson.IsObject() &&
+            payloadJson.HasMember( "iss" ) &&
+            payloadJson[ "iss" ].IsString() ) )
         {
             wsUtilLogError( "iss missing or invalid in payload json[" << decodedPayloadJsonStr << "]" );
 
@@ -450,8 +462,8 @@ namespace LHWSUtilImplNS
         iss.assign( payloadJson[ "iss" ].GetString(), payloadJson[ "iss" ].GetStringLength() );
 
         auto jwtIssuerCache(
-            LHMiscUtilNS::Singleton< LHWSUtilNS::IJwtIssuerCache >::GetInstance() ); 
-        if( !jwtIssuerCache )
+            LHMiscUtilNS::Singleton< LHWSUtilNS::IJwtIssuerCache >::GetInstance() );
+        if ( !jwtIssuerCache )
         {
             wsUtilLogError( "failed to get jwtIssuerCache" );
 
@@ -459,21 +471,21 @@ namespace LHWSUtilImplNS
         }
 
         auto jwtIssuer = jwtIssuerCache->GetIssuer( iss );
-        if( !( jwtIssuer ) )
+        if ( !( jwtIssuer ) )
         {
             wsUtilLogError( "failed to get issuer[" << iss << "]" );
 
             return nullptr;
         }
 
-        if( jwtIssuer->GetOpenIdConfiguration().empty() )
+        if ( jwtIssuer->GetOpenIdConfiguration().empty() )
         {
             wsUtilLogError( "missing openid config for issuer[" << iss << "]" );
 
             return nullptr;
         }
 
-        if( jwtIssuer->GetClientAuthzBearerToken().empty() )
+        if ( jwtIssuer->GetClientAuthzBearerToken().empty() )
         {
             wsUtilLogError( "missing bearer token for issuer[" << iss << "]" );
 
@@ -482,26 +494,26 @@ namespace LHWSUtilImplNS
 
         rapidjson::Document openIdConfigurationJson;
         parsedOkay = openIdConfigurationJson.Parse( jwtIssuer->GetOpenIdConfiguration().c_str() );
-        if( !( parsedOkay ) )
+        if ( !( parsedOkay ) )
         {
             wsUtilLogError( "failed to parse openid config json["
-                            << jwtIssuer->GetOpenIdConfiguration() << "]" );
+                << jwtIssuer->GetOpenIdConfiguration() << "]" );
 
             return nullptr;
         }
 
-        if( !( openIdConfigurationJson.IsObject() &&
-               openIdConfigurationJson.HasMember( "introspection_endpoint" ) &&
-               openIdConfigurationJson[ "introspection_endpoint" ].IsString() ) )
+        if ( !( openIdConfigurationJson.IsObject() &&
+            openIdConfigurationJson.HasMember( "introspection_endpoint" ) &&
+            openIdConfigurationJson[ "introspection_endpoint" ].IsString() ) )
         {
             wsUtilLogError( "introspection_endpoint missing or invalid in openid config json["
-                            << jwtIssuer->GetOpenIdConfiguration() << "]" );
+                << jwtIssuer->GetOpenIdConfiguration() << "]" );
 
             return nullptr;
         }
 
         introspectionEndpoint.assign( openIdConfigurationJson[ "introspection_endpoint" ].GetString(),
-                                      openIdConfigurationJson[ "introspection_endpoint" ].GetStringLength() );
+            openIdConfigurationJson[ "introspection_endpoint" ].GetStringLength() );
 
         wsUtilLogDebug( "using Bearer token[" << jwtIssuer->GetClientAuthzBearerToken() << "]" );
         headers.emplace( "Authorization", "Basic " + jwtIssuer->GetClientAuthzBearerToken() );
@@ -509,31 +521,31 @@ namespace LHWSUtilImplNS
         headers.emplace( "Accept", "application/json" );
 
         rc = simpleHttpClient->Post( introspectionEndpoint, postData, headers, responseBody );
-        if( rc != 0 )
+        if ( rc != 0 )
         {
             wsUtilLogError( "failed to post to introspection_endpoint["
-                            << introspectionEndpoint << "], rc=" << rc );
+                << introspectionEndpoint << "], rc=" << rc );
 
             return nullptr;
         }
 
         rapidjson::Document responseJson;
         parsedOkay = responseJson.Parse( responseBody.c_str() );
-        if( !( parsedOkay ) )
+        if ( !( parsedOkay ) )
         {
             wsUtilLogError( "failed to parse introspection_endpoint response[" << responseBody << "]" );
 
             return nullptr;
         }
 
-        if( !( responseJson.HasMember( "active" ) && responseJson[ "active" ].IsBool() ) )
+        if ( !( responseJson.HasMember( "active" ) && responseJson[ "active" ].IsBool() ) )
         {
             wsUtilLogError( "missing 'active' in introspection_endpoint response[" << responseBody << "]" );
 
             return nullptr;
         }
 
-        if( !( responseJson[ "active" ].GetBool() ) )
+        if ( !( responseJson[ "active" ].GetBool() ) )
         {
             wsUtilLogDebug( "token no longer active[" << b64UrlEncodedJwt << "]" );
 
@@ -545,7 +557,7 @@ namespace LHWSUtilImplNS
     }
 
     JwtValidatorFactory::JwtValidatorFactory()
-    :   LHWSUtilNS::IJwtValidatorFactory()
+        : LHWSUtilNS::IJwtValidatorFactory()
     {
     }
 
