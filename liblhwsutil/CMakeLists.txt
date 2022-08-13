@@ -59,6 +59,7 @@ target_link_libraries( lhwsutil
         "${OPENSSL_CRYPTO_LIBRARY}"
         "${CURL_LIBRARIES}"
         lhmiscutil
+        lhsslutil
         jwt )
 
 target_include_directories( lhwsutil

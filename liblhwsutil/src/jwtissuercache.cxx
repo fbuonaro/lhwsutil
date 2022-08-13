@@ -6,6 +6,8 @@
 #include <lhwsutil/isimplehttpclient.h>
 #include <lhwsutil/logging.h>
 
+#include <lhsslutil/base64.h>
+
 #include <stdexcept>
 
 namespace LHWSUtilImplNS
@@ -453,7 +455,7 @@ namespace LHWSUtilNS
 
         oss << simpleHttpClient->UrlEscape( clientId ) << ":" << simpleHttpClient->UrlEscape( clientSecret );
 
-        rc = LHWSUtilImplNS::EncodeStrToB64( oss.str(), b64EncodedStr );
+        rc = LHSSLUtilNS::EncodeStrToB64( oss.str(), b64EncodedStr );
         if ( rc != 0 )
         {
             return 3;

@@ -68,6 +68,18 @@ RUN yum install -y jansson-devel check-devel libtool automake autoconf perl-Thre
     make check && \
     make install
 
+RUN git clone https://github.com/fbuonaro/lhsslutil.git && \
+    cd lhsslutil && \
+    mkdir build && \
+    cd build && \
+    cmake3 \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        ../ && \
+    make && \
+    make test && \
+    make install-lhsslutil
+
 RUN ldconfig
 
 ENTRYPOINT [ "bash" ]
