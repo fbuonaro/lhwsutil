@@ -5,8 +5,8 @@
 [submodule "modules/lhmiscutil"]
 	path = modules/lhmiscutil
 	url = https://github.com/fbuonaro/lhmiscutil.git
-	branch = cpack-rpm-lhdist
+	branch = master
 [submodule "modules/lhsslutil"]
 	path = modules/lhsslutil
 	url = https://github.com/fbuonaro/lhsslutil.git
-	branch = cpack-rpm-lhdist
+	branch = master
