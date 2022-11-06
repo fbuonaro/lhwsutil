@@ -11,8 +11,6 @@ namespace LHWSUtilImplNS
         std::string& b64UrlEncodedPayloadOut,
         std::string& b64UrlEncodedSignatureOut )
     {
-        int ret = 0;
-
         if ( jwtStr.empty() )
         {
             return 1;
@@ -98,11 +96,19 @@ namespace LHWSUtilImplNS
             return 1;
         }
 
-        return DecodeDecomposedJwtStrs( b64UrlEncodedHeader,
+        rc = DecodeDecomposedJwtStrs( b64UrlEncodedHeader,
             b64UrlEncodedPayload,
             decodedHeaderOut,
             decodedPayloadOut );
-    };
+        if ( rc != 0 )
+        {
+            return 2;
+        }
+
+        b64UrlEncodedSignatureOut = std::move( b64UrlEncodedSignature );
+
+        return 0;
+    }
 
     int WriteOutRSAPubKeyComponentsAsPEM( const std::vector< unsigned char >& nBytes,
         const std::vector< unsigned char >& eBytes,

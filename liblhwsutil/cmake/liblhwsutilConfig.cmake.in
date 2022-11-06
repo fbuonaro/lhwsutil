@@ -1,0 +1,12 @@
+@PACKAGE_INIT@
+
+find_package( liblhmiscutil REQUIRED )
+find_package( liblhsslutil REQUIRED )
+find_package( OpenSSL 1.0 REQUIRED )
+find_package( CURL REQUIRED )
+find_package( Boost 1.69 COMPONENTS log REQUIRED )
+find_package( RapidJSON REQUIRED )
+
+if(NOT TARGET @PROJECT_NAME@::@PROJECT_NAME@)
+    include(${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake)
+endif()

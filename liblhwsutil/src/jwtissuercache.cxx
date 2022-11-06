@@ -164,8 +164,7 @@ namespace LHWSUtilImplNS
             int rc = FillJwtIssuerFromEndpoints( algsToFetch, *jwtIssuer );
             if ( rc == 0 )
             {
-                auto itIsstoJwtIssuer = issToJwtIssuer.emplace( cacheParams.iss, jwtIssuer );
-                // TODO - check
+                (void)issToJwtIssuer.emplace( cacheParams.iss, jwtIssuer );
             }
             else
             {

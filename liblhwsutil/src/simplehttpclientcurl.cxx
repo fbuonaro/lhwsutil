@@ -32,6 +32,7 @@ namespace LHWSUtilImplNS
             bool failed = false;
 
             // size is always 1, ignore it
+            (void)size;
 
             try
             {
@@ -75,6 +76,8 @@ namespace LHWSUtilImplNS
             size_t size,
             void *userptr )
         {
+            (void)handle;
+            (void)type;
             try
             {
                 wsUtilLogSetScope( "debug_callback" );
@@ -136,7 +139,7 @@ namespace LHWSUtilImplNS
     {
         wsUtilLogSetScope( "SimpleHttpClientCurl.Get" );
 
-        CURLcode rc;
+        CURLcode rc( CURLE_OK );
         int ret = 0;
         std::string dataStr;
         curlWriteCallbackData callbackData( url, dataStr );

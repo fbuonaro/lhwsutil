@@ -20,7 +20,7 @@ namespace LHWSUtilNS
 }
 
 // Singleton logger
-BOOST_LOG_GLOBAL_LOGGER( LHWSUtilLoggerGeneric, LHWSUtilNS::LoggerType );
+BOOST_LOG_GLOBAL_LOGGER( LHWSUtilLoggerGeneric, LHWSUtilNS::LoggerType )
 
 // call at top of every function
 #define wsUtilLogSetScope( scopeName ) \

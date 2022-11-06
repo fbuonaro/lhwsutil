@@ -1,0 +1,76 @@
+################################################################################## 
+# STAGE 0 - base environment with first set of runtime dependencies 
+##################################################################################
+ARG BUILD_TAG
+ARG GIT_COMMIT
+
+FROM centos:centos7 as libjwt-lhdist-base-env
+
+RUN yum -y --enablerepo=extras install epel-release && \
+    yum -y install https://repo.ius.io/ius-release-el7.rpm && \
+    yum clean all
+
+##################################################################################
+# STAGE 1 - build tools and libraries needed to build libjwt
+##################################################################################
+FROM libjwt-lhdist-base-env as libjwt-lhdist-build-env
+
+# for compiling and unit testing
+RUN yum -y install \
+        cmake3 \
+        gcc \
+        gcc-c++ \
+        gtest-devel \
+        make \
+        rpm-build && \
+    yum clean all
+
+# for building an rpm package
+RUN yum -y install rpm-devel rpmlint bash coreutils diffutils patch rpmdevtools && \
+    yum -y clean all
+
+# for libjwt
+RUN yum install -y \
+        git \
+        openssl-devel \
+        jansson-devel check-devel libtool automake autoconf perl-Thread-Queue.noarch && \
+    yum -y clean all
+
+##################################################################################
+# STAGE 2 - built and packaged libjwt
+##################################################################################
+FROM libjwt-lhdist-build-env as libjwt-lhdist-build
+
+RUN mkdir -p /libjwt-lhdist
+
+ADD ./modules/lhscriptutil/scripts/rpmdev-setuptree-at.sh /libjwt-lhdist
+ADD ./dist/libjwt-lhdist.spec /libjwt-lhdist
+
+RUN cd /libjwt-lhdist && \
+    mkdir build && \
+    ./rpmdev-setuptree-at.sh ./build && \
+    rpmbuild --define "_topdir ${PWD}/build"  -ba ./libjwt-lhdist.spec && \
+    mkdir -p /lhdist && \
+    find ./build/RPMS/ | grep "\.rpm" | xargs -I{} cp -f -u {} /lhdist
+
+ENV BUILD_TAG=${BUILD_TAG}
+LABEL build_tag="${BUILD_TAG}"
+ENV GIT_COMMIT=${GIT_COMMIT}
+LABEL git_commit="${GIT_COMMIT}"
+
+##################################################################################
+# STAGE 3 - test /lhdist
+##################################################################################
+FROM libjwt-lhdist-build-env as libjwt-lhdist-check
+
+ADD ./modules/lhscriptutil/scripts/refreshOrSetupLHDistYumRepo.sh /refreshOrSetupLHDistYumRepo.sh
+RUN /refreshOrSetupLHDistYumRepo.sh
+RUN yum -y repo-pkgs lhdistrepo install && \
+    yum clean all
+
+##################################################################################
+# STAGE 4 - package in /lhdist
+##################################################################################
+FROM libjwt-lhdist-base-env as libjwt-lhdist-dist
+
+COPY --from=libjwt-lhdist-build /lhdist /lhdist

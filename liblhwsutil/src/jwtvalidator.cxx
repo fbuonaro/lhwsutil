@@ -3,6 +3,7 @@
 #include <jwt.h> // C
 
 #include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
 #include <rapidjson/writer.h>
 #include <rapidjson/stringbuffer.h>
 
@@ -312,8 +313,6 @@ namespace LHWSUtilImplNS
             return -1;
         }
 
-        int ret = 0;
-
         if ( jsonValue.HasMember( grant.c_str() ) )
         {
             rapidjson::StringBuffer buffer;
@@ -324,7 +323,7 @@ namespace LHWSUtilImplNS
         }
         else
         {
-            ret = 1;
+            return 1;
         }
 
         return 0;
@@ -356,8 +355,16 @@ namespace LHWSUtilImplNS
     void ValidJwtJson::ToString( std::string& out, bool prettyPrint ) const
     {
         rapidjson::StringBuffer buffer;
-        rapidjson::Writer< rapidjson::StringBuffer > writer( buffer );
-        jsonValue.Accept( writer );
+        if ( prettyPrint )
+        {
+            rapidjson::PrettyWriter< rapidjson::StringBuffer > writer( buffer );
+            jsonValue.Accept( writer );
+        }
+        else
+        {
+            rapidjson::Writer< rapidjson::StringBuffer > writer( buffer );
+            jsonValue.Accept( writer );
+        }
 
         out.assign( buffer.GetString(), buffer.GetSize() );
     }

@@ -1,0 +1,123 @@
+################################################################################## 
+# STAGE 0 - base environment with first set of runtime dependencies 
+##################################################################################
+ARG BUILD_TAG
+ARG GIT_COMMIT
+
+FROM centos:centos7 as lhwsutil-base-env
+
+# okay repo is for gtest/gmock 1.8, 1.6 is permanently broken
+RUN yum -y --enablerepo=extras install epel-release && \
+    yum -y install https://repo.ius.io/ius-release-el7.rpm && \
+    yum -y install http://repo.okay.com.mx/centos/7/x86_64/release/okay-release-1-5.el7.noarch.rpm && \
+    yum clean all
+
+##################################################################################
+# STAGE 1 - build tools and libraries needed to build lhwsutil
+##################################################################################
+### deps ###
+FROM lhmiscutil:dist-${BUILD_TAG} AS lhmiscutil_dist_build
+FROM lhsslutil:dist-${BUILD_TAG} AS lhsslutil_dist_build
+FROM libjwt-lhdist:dist-${BUILD_TAG} AS libjwt_lhdist_dist_build
+### deps ###
+FROM lhwsutil-base-env as lhwsutil-build-env
+
+# for compiling and unit testing
+# x86_64 versions from okay repo for gmock/gtest 1.8
+RUN yum -y install \
+        cmake3 \
+        gcc \
+        gcc-c++ \
+        gtest-devel.x86_64 \
+        gmock-devel.x86_64 \
+        make \
+        boost169-devel \
+        curl-devel \
+        openssl-devel \
+        rapidjson-devel \
+        rpm-build && \
+    yum clean all
+
+ADD ./modules/lhscriptutil/scripts/refreshOrSetupLHDistYumRepo.sh /refreshOrSetupLHDistYumRepo.sh
+RUN /refreshOrSetupLHDistYumRepo.sh
+
+COPY --from=lhmiscutil_dist_build /lhdist/*.rpm /lhdist/
+COPY --from=lhsslutil_dist_build /lhdist/*.rpm /lhdist/
+COPY --from=libjwt_lhdist_dist_build /lhdist/*.rpm /lhdist/
+RUN /refreshOrSetupLHDistYumRepo.sh
+
+RUN yum -y repo-pkgs lhdistrepo install && \
+    ldconfig && \
+    yum clean all
+
+ENTRYPOINT [ "bash" ]
+
+##################################################################################
+# STAGE 2 - the lhwsutil source and compiled binaries
+##################################################################################
+FROM lhwsutil-build-env as lhwsutil-build
+
+ADD . /lhwsutil
+RUN cd /lhwsutil && \
+    mkdir ./build && \
+    cd ./build && \
+    cmake3 \
+        -DBOOST_INCLUDEDIR=/usr/include/boost169 \
+        -DBOOST_LIBRARYDIR=/usr/lib64/boost169 \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+        -DCPACK_PACKAGE_DIRECTORY=/lhdist \
+        ../ && \
+    make && \
+    make test && \
+    make package && \
+    /refreshOrSetupLHDistYumRepo.sh
+
+ENV BUILD_TAG=${BUILD_TAG}
+LABEL build_tag="${BUILD_TAG}"
+ENV GIT_COMMIT=${GIT_COMMIT}
+LABEL git_commit="${GIT_COMMIT}"
+
+##################################################################################
+# STAGE 3 - the base image with additional built runtime dependencies, lhwsutil 
+#           binaries and test binaries needed for running integration tests
+#           includes everything from build-env
+##################################################################################
+FROM lhwsutil-build as lhwsutil-test-env
+
+RUN cd /lhwsutil/build && \
+    make install && \
+    ldconfig
+
+##################################################################################
+# STAGE 4 - the base image with additional built runtime dependencies and 
+#           lhwsutil binaries includes nothing from build-env
+##################################################################################
+FROM lhwsutil-base-env as lhwsutil-main
+
+COPY --from=lhwsutil-build /usr/ /usr/
+COPY --from=lhwsutil-build /etc/ /etc/
+COPY --from=lhwsutil-build /lhwsutil/ /lhwsutil/
+RUN cd /lhwsutil/build && \
+    make install && \
+    make package && \
+    ldconfig && \
+    cd / && \
+    rm -rf /lhwsutil
+
+##################################################################################
+# STAGE 5 - the base image with additional built runtime dependencies and 
+#           lhwsutil binaries includes nothing from build-env
+##################################################################################
+FROM lhwsutil-base-env as lhwsutil-dist-test
+
+COPY --from=lhwsutil-build /lhdist/ /lhdist/
+ADD ./modules/lhscriptutil/scripts/refreshOrSetupLHDistYumRepo.sh /refreshOrSetupLHDistYumRepo.sh
+RUN /refreshOrSetupLHDistYumRepo.sh
+RUN yum -y repo-pkgs lhdistrepo install && \
+    ldconfig && \
+    yum clean all
+
+FROM lhwsutil-base-env as lhwsutil-dist
+
+COPY --from=lhwsutil-dist-test /lhdist/ /lhdist/
