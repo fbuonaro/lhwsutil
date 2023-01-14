@@ -6,15 +6,7 @@ then
     TARGET_STAGE="dist"
 fi
 
-# lhmiscutil
-pushd ./modules/lhmiscutil
-./scripts/buildLHMiscUtilImage.sh
-popd
-
-# lhsslutil
-pushd ./modules/lhsslutil
-./scripts/buildLHSSLUtilImage.sh
-popd
+./modules/lhscriptutil/scripts/buildLHDeps.sh
 
 # libjwt
 ./scripts/buildLibJwtLHDistImage.sh
