@@ -136,7 +136,7 @@ lh_add_install_cmake_config()
 ##############################################################
  
 # TODO - version
-set( CPACK_RPM_LIBLHWSUTIL_PACKAGE_REQUIRES "boost169-devel >= 1.0.0" PARENT_SCOPE)
+set( CPACK_RPM_LIBLHWSUTIL_PACKAGE_REQUIRES "boost169-devel" PARENT_SCOPE)
 
 # to relocate the pc file prefix to /somewhere if 'rpm --install --prefix /somewhere'
 set( CPACK_RPM_LIBLHWSUTIL_PACKAGE_REQUIRES_POST "sed" PARENT_SCOPE) 
