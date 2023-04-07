@@ -11,7 +11,7 @@ enable_testing()
 
 set(LH_SUBDIRECTORIES liblhwsutil)
 
-include("modules/lhscriptutil/cmake/lhmacros.cmake")
+include("/lhscriptutil/cmake/lhmacros.cmake")
 
 lh_toplevel_add_subdirectories()
 

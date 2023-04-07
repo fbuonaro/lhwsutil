@@ -13,7 +13,12 @@ RUN yum -y --enablerepo=extras install epel-release && \
 ##################################################################################
 # STAGE 1 - build tools and libraries needed to build libjwt
 ##################################################################################
+### deps ###
+FROM lhscriptutil:dist-${BUILD_TAG} AS lhscriptutil_dist_build
+### deps ###
 FROM libjwt-lhdist-base-env as libjwt-lhdist-build-env
+
+COPY --from=lhscriptutil_dist_build /lhscriptutil/ /lhscriptutil/
 
 # for compiling and unit testing
 RUN yum -y install \
@@ -33,8 +38,28 @@ RUN yum -y install rpm-devel rpmlint bash coreutils diffutils patch rpmdevtools 
 RUN yum install -y \
         git \
         openssl-devel \
-        jansson-devel check-devel libtool automake autoconf perl-Thread-Queue.noarch && \
+        jansson-devel libtool automake autoconf perl-Thread-Queue.noarch && \
     yum -y clean all
+
+# build check from source 
+# centos7 had an older version of check and jwt_dump test used ck_assert_ptr_ne (missing from old check)
+# without indef .. def'ing it
+# for makeinfo
+# TODO - remove once libcheck is installed through package manager again
+RUN yum install -y \
+    texinfo && \
+    yum -y clean all
+
+RUN mkdir /libcheck && \
+    cd /libcheck && \
+    git clone https://github.com/libcheck/check.git && \
+    cd ./check && \
+    autoreconf --install && \
+    ./configure --prefix=/usr && \
+    make && \
+    make check && \
+    make install && \
+    ldconfig
 
 ##################################################################################
 # STAGE 2 - built and packaged libjwt
@@ -43,12 +68,11 @@ FROM libjwt-lhdist-build-env as libjwt-lhdist-build
 
 RUN mkdir -p /libjwt-lhdist
 
-ADD ./modules/lhscriptutil/scripts/rpmdev-setuptree-at.sh /libjwt-lhdist
 ADD ./dist/libjwt-lhdist.spec /libjwt-lhdist
 
 RUN cd /libjwt-lhdist && \
     mkdir build && \
-    ./rpmdev-setuptree-at.sh ./build && \
+    /lhscriptutil/scripts/rpmdev-setuptree-at.sh ./build && \
     rpmbuild --define "_topdir ${PWD}/build"  -ba ./libjwt-lhdist.spec && \
     mkdir -p /lhdist && \
     find ./build/RPMS/ | grep "\.rpm" | xargs -I{} cp -f -u {} /lhdist
@@ -63,8 +87,9 @@ LABEL git_commit="${GIT_COMMIT}"
 ##################################################################################
 FROM libjwt-lhdist-build-env as libjwt-lhdist-check
 
-ADD ./modules/lhscriptutil/scripts/refreshOrSetupLHDistYumRepo.sh /refreshOrSetupLHDistYumRepo.sh
-RUN /refreshOrSetupLHDistYumRepo.sh
+COPY --from=libjwt-lhdist-build /lhdist/ /lhdist/
+COPY --from=libjwt-lhdist-build-env /lhscriptutil/ /lhscriptutil/
+RUN /lhscriptutil/scripts/refreshOrSetupLHDistYumRepo.sh
 RUN yum -y repo-pkgs lhdistrepo install && \
     yum clean all
 
@@ -73,4 +98,4 @@ RUN yum -y repo-pkgs lhdistrepo install && \
 ##################################################################################
 FROM libjwt-lhdist-base-env as libjwt-lhdist-dist
 
-COPY --from=libjwt-lhdist-build /lhdist /lhdist
+COPY --from=libjwt-lhdist-check /lhdist /lhdist

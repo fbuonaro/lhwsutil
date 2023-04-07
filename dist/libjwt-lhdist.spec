@@ -14,9 +14,10 @@ git clone https://github.com/benmcollins/libjwt.git
 
 %build
 cd libjwt
-autoreconf -i
-./configure --prefix=/usr
-make
+autoreconf -i 
+# TODO - remove PKG_CONFIG_PATH once libcheck is installed through package manager
+./configure PKG_CONFIG_PATH=/usr/lib/pkgconfig --prefix=/usr 
+make all
 make check
 
 %install

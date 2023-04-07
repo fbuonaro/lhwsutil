@@ -46,5 +46,4 @@
 **/.dockerignore
 
 /modules/
-!/modules/lhscriptutil/
 /build/
