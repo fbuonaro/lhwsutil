@@ -13,6 +13,7 @@ if not gitDir:
 load( "ext://git_resource", "git_checkout" )
 git_checkout( "git@github.com:fbuonaro/lhscriptutil.git#release/v/1.3.0" )
 commonTilt = load_dynamic( os.path.join( gitDir, "lhscriptutil", "tilt", "common", "Tiltfile") )
+lhGitCheckoutAndLoad = commonTilt[ "lhGitCheckoutAndLoad" ]
 lhQuickBuildImage = commonTilt[ "lhQuickBuildImage" ]
 lhQuickBuildImageNoK8 = commonTilt[ "lhQuickBuildImageNoK8" ]
 trySetTopLevelComponent = commonTilt[ "trySetTopLevelComponent" ]
