@@ -10,7 +10,7 @@ License:    See https://github.com/benmcollins/libjwt
 custom libjwt linked against openssl 1.0.2 wrapped in rpm
 
 %prep
-git clone https://github.com/benmcollins/libjwt.git
+git clone --depth 1 --branch v1.15.3 https://github.com/benmcollins/libjwt.git
 
 %build
 cd libjwt
