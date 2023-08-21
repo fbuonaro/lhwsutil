@@ -407,6 +407,7 @@ namespace LHWSUtilImplNS
         std::string clientAuthzBearerToken;
         std::unordered_map< std::string, std::string > headers;
         std::string postData = "token_type_hint=requesting_party_token&token=" + b64UrlEncodedJwt;
+        // std::string postData = "token_type_hint=access_token&token=" + b64UrlEncodedJwt;
         std::string decodedHeaderJsonStr;
         std::string decodedPayloadJsonStr;
         std::string b64UrlEncodedSignature;
